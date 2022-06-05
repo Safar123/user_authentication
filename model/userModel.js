@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
-const validator = require('validator')
+const validator = require('validator');
+const bcrypt = require('bcrypt');
+const res = require('express/lib/response');
 
 const userSchema = new mongoose.Schema({
 
@@ -56,6 +58,22 @@ const userSchema = new mongoose.Schema({
         default:Date.now
     }
 })
+
+userSchema.pre('save', async function(next){
+    if(!this.isModified('password')) return next;
+    this.password = await bcrypt.hash(this.password, 12);
+    this.confirmPassword= undefined;
+})
+
+//*in schema we have an access to method properties to create function
+
+userSchema.methods.checkPwdEncryption = async function(userPwd, encryptedPwd){
+
+    return await bcrypt.compare(userPwd, encryptedPwd)
+
+    //*this function hs 2 parameter one will be plain pwd and one encrypted which is the compared using bcrypt.compare
+
+}
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;
