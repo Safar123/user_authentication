@@ -25,7 +25,6 @@ const userSchema = new mongoose.Schema({
         required:[true, 'Please provid valid password'],
         minlength:[8, 'Password must be atleast 8 character long'],
         select:false,
-        validate:[validator.isAlphanumeric, 'Password must conain letter and number']
     },
 
     confirmPassword:{
