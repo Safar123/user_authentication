@@ -1,14 +1,12 @@
-const res = require('express/lib/response');
 const User = require('../model/userModel');
+const GlobalError = require('../utils/globalError');
+const catchAsync = require('../utils/catchAsyncError')
 
-exports.getAllUser = async (req, res) => {
+exports.getAllUser = catchAsync( async (req, res, next) => {
     const allUser = await User.find();
 
     if (!allUser || allUser.length === 0) {
-        return res.status(400).json({
-            success: false,
-            message: 'No user registered yet'
-        })
+        return next(new GlobalError('No user listed yet', 404))
     }
 
     res.status(200).json({
@@ -19,16 +17,13 @@ exports.getAllUser = async (req, res) => {
             users: allUser
         }
     })
-}
+})
 
-exports.getSingleUser = async (req, res) => {
+exports.getSingleUser = catchAsync( async (req, res, next) => {
 
     const findUser = await User.findById(req.params.id);
     if (!findUser) {
-        return res.status(400).json({
-            success: false,
-            message: 'User doesnt exist'
-        })
+        return next (new GlobalError(`User doesn't exist for ${findUser.id} ID`, 404))
     }
 
     res.status(200).json({
@@ -37,15 +32,12 @@ exports.getSingleUser = async (req, res) => {
             user: findUser
         }
     })
-}
+})
 
-exports.updateUserSelf = async (req, res) => {
+exports.updateUserSelf = catchAsync( async (req, res, next) => {
     let userDetail = await User.findById(req.params.id);
 
-    if (!userDetail) return res.status(400).json({
-        success: false,
-        message: 'User does not exist'
-    })
+    if (!userDetail) return next (new GlobalError (`User doesn't exist for ${findUser.id} ID`, 404))
 
     userDetail = await User.findByIdAndUpdate(userDetail.id, req.body, { new: true, runValidators: true })
 
@@ -55,20 +47,18 @@ exports.updateUserSelf = async (req, res) => {
             user: userDetail
         }
     })
-}
+})
 
-exports.deleteUser = async (req, res) => {
+exports.deleteUser = catchAsync( async (req, res, next) => {
 
     let removeUser = await User.findById(req.params.id);
-    if (!removeUser) return res.status(400).json({
-        success: false,
-        message: 'User does not exist'
-    })
+    if (!removeUser) return next (new GlobalError (`User doesn't exist for ${findUser.id} ID`, 404));
+    
     removeUser = await User.findByIdAndRemove(removeUser.id);
 
     res.status(203).json({
         success: true,
         message: 'User has been removed'
     })
-}
+})
 
