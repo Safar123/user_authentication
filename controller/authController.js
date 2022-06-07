@@ -1,5 +1,7 @@
 const User = require("../model/userModel");
-exports.signUpUser = async (req, res) => {
+const catchAsync = require('../utils/catchAsyncError');
+
+exports.signUpUser = catchAsync( async (req, res) => {
     if (req.body.password.match(/^[a-zA-Z][0-9]$/)) {
         return res.status(400).json({
             success: false,
@@ -13,6 +15,7 @@ exports.signUpUser = async (req, res) => {
         password: req.body.password,
         confirmPassword: req.body.confirmPassword,
         userImage: req.body.userImage,
+        role:req.body.role
     });
 
     res.status(201).json({
@@ -21,11 +24,11 @@ exports.signUpUser = async (req, res) => {
             user: newUser,
         },
     });
-};
+});
 
 //!Login function
 
-exports.logInUser = async (req, res) => {
+exports.logInUser = catchAsync( async (req, res) => {
     //!first to provide login function we need email and password from request body
     const { email, password } = req.body;
 
@@ -53,4 +56,4 @@ exports.logInUser = async (req, res) => {
             message: "User login successful",
         });
     }
-};
+});
