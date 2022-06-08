@@ -1,7 +1,36 @@
 const User = require("../model/userModel");
 const catchAsync = require('../utils/catchAsyncError');
+const GlobalError= require('../utils/globalError');
+const multer = require('multer');
+
+const multerStorage = multer.diskStorage({
+
+    destination:(req, file, cb)=>{
+        cb(null, 'public/img')
+    },
+
+    filename:(req, file, cb)=>{
+        const ext = file.mimetype.split('/')[1];
+        cb(null, `user-${Date.now()}.${ext}`)
+    }
+})
+
+
+const multerFilter = (req, file, cb)=>{
+    if(file.mimetype.startsWith('image')){
+        cb(null, true)
+    }else{
+        cb(new GlobalError('Invalid file type. Please upload image only', 400), false)
+    }
+}
+
+const upload = multer({
+    storage:multerStorage,
+    fileFilter:multerFilter
+})
 
 exports.signUpUser = catchAsync( async (req, res) => {
+    
     if (req.body.password.match(/^[a-zA-Z][0-9]$/)) {
         return res.status(400).json({
             success: false,
@@ -14,7 +43,7 @@ exports.signUpUser = catchAsync( async (req, res) => {
         email: req.body.email,
         password: req.body.password,
         confirmPassword: req.body.confirmPassword,
-        userImage: req.body.userImage,
+        userImage: req.file.filename,
         role:req.body.role
     });
 
@@ -25,6 +54,8 @@ exports.signUpUser = catchAsync( async (req, res) => {
         },
     });
 });
+
+exports.uploadUserPhoto = upload.single('userImage');
 
 //!Login function
 
