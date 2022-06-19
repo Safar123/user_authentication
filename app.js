@@ -19,5 +19,6 @@ app.all('*', (req,res,next)=>{
     return next(new GlobalError (`${req.originalUrl} not defined in system. Page not found`, 404))
 })
 
+
 app.use(errorHandler);
 module.exports = app;
