@@ -5,8 +5,6 @@ const bcrypt = require("bcrypt");
 const userSchema = new mongoose.Schema({
     username: {
         type: String,
-        required: [true, "Please provide valid username"],
-        unique: [true, "User name already exist try something new"],
         lowercase: true,
         trim: true,
     },
@@ -55,11 +53,14 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+
+    passwordChangedAt:Date
 });
 
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next;
     this.password = await bcrypt.hash(this.password, 12);
+    this.username = this.email.split("@")[0];
     this.confirmPassword = undefined;
 });
 
@@ -68,8 +69,17 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.checkPwdEncryption = async function (userPwd, encryptedPwd) {
     return await bcrypt.compare(userPwd, encryptedPwd);
 
-    //*this function hs 2 parameter one will be plain pwd and one encrypted which is the compared using bcrypt.compare
+    //*this function hs 2 parameter one will be plain pwd and one encrypted which is compared using bcrypt.compare
 };
+
+userSchema.methods.checkIfPswdChanged = function(JWTtimestamp){
+
+    if(this.passwordChangedAt){
+        const convertedTime = parseInt(this.passwordChangedAt.getTime()/1000, 10);
+        return JWTtimestamp < convertedTime
+    }
+    return false
+}
 
 const User = mongoose.model("User", userSchema);
 module.exports = User;
