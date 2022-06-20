@@ -18,6 +18,8 @@ const handleValidationDB =err=>{
     return new GlobalError(message, 400);
 }
 
+const handleInvalidJWT = ()=> new GlobalError('Token signature invalid.', 401)
+
 const errorInDevelopment =(err,res)=>{
 //!In development mode printing out all of the error stack
     res.status(err.statusCode).json({
@@ -63,6 +65,8 @@ module.exports = (err, req, res, next) => {
         if(err.code ===11000) err = handleDuplicateDB(err)
 
         if(err.name ==='ValidationError') err = handleValidationDB (err)
+
+        if(err.name === 'JsonWebTokenError') err = handleInvalidJWT()
         
         errorInProduction(err,res)
     }
