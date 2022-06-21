@@ -1,16 +1,11 @@
-const {promisify} = require('util')
+const { promisify } = require('util')
 const User = require("../model/userModel");
 const catchAsync = require("../utils/catchAsyncError");
 const GlobalError = require("../utils/globalError");
 const sharp = require("sharp");
 const multer = require("multer");
-const jwt = require("jsonwebtoken");
+const jwtTokenHandler = require('../utils/jwtTokenHandler');
 
-const webToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN,
-    });
-};
 
 const multerStorage = multer.memoryStorage();
 
@@ -58,7 +53,7 @@ exports.signUpUser = catchAsync(async (req, res) => {
         role: req.body.role,
     });
 
-    const token = webToken(newUser._id);
+    const token = jwtTokenHandler(newUser)
     res.status(201).json({
         success: "true",
         token,
@@ -90,7 +85,7 @@ exports.logInUser = catchAsync(async (req, res, next) => {
             )
         );
     }
-    const token = webToken(user._id);
+    const token = jwtTokenHandler(user)
     if (user) {
         res.status(200).json({
             success: true,
@@ -100,35 +95,35 @@ exports.logInUser = catchAsync(async (req, res, next) => {
 });
 
 exports.protectRoute = catchAsync(async (req, res, next) => {
-   let token;
+    let token;
     if (
         req.headers.authorization &&
         req.headers.authorization.startsWith("Bearer")
     ) {
-        token = req.headers.authorization.split(" ")[1];     
+        token = req.headers.authorization.split(" ")[1];
     }
-    //checking if the signature is valid
+    //!checking if the signature is valid
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-   
-    //check if user exist
+
+    //!check if user exist
     const existUser = await User.findById(decoded.id);
 
-    if(!existUser){
+    if (!existUser) {
         return next(new GlobalError('User doesnt exist for the generated token. Please check credentials', 401))
     }
 
-    //check if user has changed password after token was generated
-   if( existUser.checkIfPswdChanged(decoded.iat)){
- return next(new GlobalError('User has changed password recently.', 401))
-   }
+    //!check if user has changed password after token was generated
+    if (existUser.checkIfPswdChanged(decoded.iat)) {
+        return next(new GlobalError('User has changed password recently.', 401))
+    }
 
-   req.user = existUser;
+    req.user = existUser;
     next();
 });
 
-exports.authorizationRoutes = (...roles)=>{
-    return(req,res,next)=>{
-        if(!roles.includes(req.user.role)){
+exports.authorizationRoutes = (...roles) => {
+    return (req, res, next) => {
+        if (!roles.includes(req.user.role)) {
 
             return next(new GlobalError(' You do not have access to complete this action', 403));
         }
@@ -136,5 +131,5 @@ exports.authorizationRoutes = (...roles)=>{
         next();
     }
 
-   
+
 }
