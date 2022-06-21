@@ -1,6 +1,8 @@
 const GlobalError = require("./globalError");
+const jwt =require('jsonwebtoken');
+const { promisify } = require('util')
 
-const generateToken = (user)=>{
+exports.generateToken = (user)=>{
 
     const token = user.webToken(user._id);
     if(!token){
@@ -9,4 +11,12 @@ const generateToken = (user)=>{
     return token
 }
 
-module.exports = generateToken
+exports.verifyToken = async (vToken)=>{
+
+   const verified= await promisify(jwt.verify)(vToken, process.env.JWT_SECRET);
+   if(!verified){
+    return next(new GlobalError ('JWT token verification failed', 403))
+   }
+
+   return verified
+}
