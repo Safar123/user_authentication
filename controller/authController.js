@@ -1,10 +1,10 @@
-const { promisify } = require('util')
+
 const User = require("../model/userModel");
 const catchAsync = require("../utils/catchAsyncError");
 const GlobalError = require("../utils/globalError");
 const sharp = require("sharp");
 const multer = require("multer");
-const jwtTokenHandler = require('../utils/jwtTokenHandler');
+const {generateToken, verifyToken} = require('../utils/jwtTokenHandler');
 
 
 const multerStorage = multer.memoryStorage();
@@ -53,7 +53,7 @@ exports.signUpUser = catchAsync(async (req, res) => {
         role: req.body.role,
     });
 
-    const token = jwtTokenHandler(newUser)
+    const token = generateToken(newUser)
     res.status(201).json({
         success: "true",
         token,
@@ -85,7 +85,7 @@ exports.logInUser = catchAsync(async (req, res, next) => {
             )
         );
     }
-    const token = jwtTokenHandler(user)
+    const token = generateToken(user)
     if (user) {
         res.status(200).json({
             success: true,
@@ -103,7 +103,7 @@ exports.protectRoute = catchAsync(async (req, res, next) => {
         token = req.headers.authorization.split(" ")[1];
     }
     //!checking if the signature is valid
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    const decoded = await verifyToken(token);
 
     //!check if user exist
     const existUser = await User.findById(decoded.id);
