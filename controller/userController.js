@@ -37,6 +37,10 @@ exports.getSingleUser = catchAsync(async (req, res, next) => {
 exports.updateUserSelf = catchAsync(async (req, res, next) => {
     let userDetail = await User.findById(req.params.id);
 
+    if(req.user.id !==userDetail.id){
+        return next (new GlobalError('You can not update someone else information', 403))
+    }
+
     if (!userDetail)
         return next(
             new GlobalError(`User doesn't exist for ${findUser.id} ID`, 404)
