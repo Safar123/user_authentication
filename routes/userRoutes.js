@@ -16,12 +16,12 @@ const {
 
 const router = express.Router();
 router.route("/signUp").post(uploadUserImage, resizeUserImage, signUpUser);
-router.route("/").get(protectRoute, getAllUser);
+router.route("/").get(protectRoute, authorizationRoutes('admin', 'superadmin'), getAllUser);
 router
     .route("/:id")
-    .get(getSingleUser)
+    .get(protectRoute,getSingleUser)
     .patch(protectRoute, updateUserSelf)
-    .delete(protectRoute, authorizationRoutes("admin"), deleteUser);
+    .delete(protectRoute, authorizationRoutes("admin", 'superadmin'), deleteUser);
 router.route("/login").post(logInUser);
 
 module.exports = router;
