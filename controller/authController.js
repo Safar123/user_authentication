@@ -1,10 +1,10 @@
-
 const User = require("../model/userModel");
 const catchAsync = require("../utils/catchAsyncError");
 const GlobalError = require("../utils/globalError");
 const sharp = require("sharp");
 const multer = require("multer");
 const {generateToken, verifyToken} = require('../utils/jwtTokenHandler');
+const sendResetEmail = require('../utils/passwordResetMail');
 
 
 const multerStorage = multer.memoryStorage();
@@ -130,6 +130,51 @@ exports.authorizationRoutes = (...roles) => {
 
         next();
     }
-
-
 }
+
+exports.forgetPassword = catchAsync(async(req,res,next)=>{
+
+    if(!req.body.email){
+        return next(new GlobalError('Please provide email address', 400 ))
+    }
+    const user = await User.findOne({email:req.body.email});
+
+    if(!user){
+        return next (new GlobalError('No user is registered with provided email', 404))
+    }
+
+    const resetToken = user.generatePasswordResetToken();
+    await user.save({validateBeforeSave:false});
+
+    //!defining url to password reset and sending email
+
+    const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
+    const message = `Forgot your password? If yes then use this link to reset your password using PATCH request on ${resetURL} URL
+    \n If this is not what you have requested please kindly ignore this email. \n Thank You `;
+    
+try{
+
+    await sendResetEmail({
+        email:user.email,
+        subject:'Your password reset link (This token will expire in 10 minutes)',
+        message
+    })
+    res.status(200).json({
+        success:'success',
+        message:'Token sent to email'
+    })
+}
+ catch(err){
+
+    user.passwordResetToken = undefined;
+    user.passwordTokenExpire= undefined;
+    await user.save({validateBeforeSave:false});
+
+    return next(new GlobalError('Something went wrong while sending email to user'), 500);
+}
+
+})
+
+exports.resetPassword = catchAsync(async(req,res,next)=>{
+
+})
