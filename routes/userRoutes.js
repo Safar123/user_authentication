@@ -6,6 +6,8 @@ const {
     uploadUserImage,
     protectRoute,
     authorizationRoutes,
+    forgetPassword,
+    resetPassword
 } = require("../controller/authController");
 const {
     getAllUser,
@@ -23,5 +25,7 @@ router
     .patch(protectRoute, updateUserSelf)
     .delete(protectRoute, authorizationRoutes("admin", 'superadmin'), deleteUser);
 router.route("/login").post(logInUser);
+router.post('/resetPassword/:token', resetPassword)
+router.post('/forgetPassword', forgetPassword)
 
 module.exports = router;
