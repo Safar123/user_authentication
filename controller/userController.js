@@ -60,13 +60,19 @@ exports.updateUserSelf = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteUser = catchAsync(async (req, res, next) => {
+    const user = req.user;
+    if(user.id !==req.params.id && !user.role.includes('admin', 'superadmin')){
+
+        return next(new GlobalError('You cannot delete someone else information'), 403)
+    }
+
     let removeUser = await User.findById(req.params.id);
     if (!removeUser)
         return next(
             new GlobalError(`User doesn't exist for ${removeUser.id} ID`, 404)
         );
 
-    removeUser = await User.findByIdAndRemove(removeUser.id);
+    removeUser = await User.findByIdAndUpdate(req.params.id,{active:false});
 
     res.status(203).json({
         success: true,
