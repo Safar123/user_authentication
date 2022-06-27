@@ -22,7 +22,7 @@ exports.getSingleUser = catchAsync(async (req, res, next) => {
     const findUser = await User.findById(req.params.id);
     if (!findUser) {
         return next(
-            new GlobalError(`User doesn't exist for ${findUser.id} ID`, 404)
+            new GlobalError(`User doesn't exist for ${req.params.id} ID`, 404)
         );
     }
 
