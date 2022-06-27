@@ -1,3 +1,4 @@
+const crypto = require('crypto')
 const User = require("../model/userModel");
 const catchAsync = require("../utils/catchAsyncError");
 const GlobalError = require("../utils/globalError");
@@ -6,6 +7,15 @@ const multer = require("multer");
 const {generateToken, verifyToken} = require('../utils/jwtTokenHandler');
 const sendResetEmail = require('../utils/passwordResetMail');
 
+const filterObj =(obj, ...fields)=>{
+const newObj = {};
+    Object.keys(obj).forEach(el=>{
+        if(fields.includes(el)) newObj[el] = obj[el]
+    })
+
+    return newObj;
+        
+}
 
 const multerStorage = multer.memoryStorage();
 
@@ -174,7 +184,86 @@ try{
 }
 
 })
-
+  
 exports.resetPassword = catchAsync(async(req,res,next)=>{
+
+    if(req.params.token.length<64){
+        return next (new GlobalError('Please provide valid token'), 400)
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+    const user = await User.findOne({passwordResetToken: hashedToken,
+         passwordResetToken:{
+            $gt:Date.now()
+         }}).select('+password')
+
+         if(!user){
+            return next(new GlobalError('Invalid reset token or token has expired'), 400)
+         }
+    
+     const newPassHash = await user.checkPwdEncryption(req.body.password, user.password)
+if (newPassHash){
+    return next(new GlobalError('Thats your current password. Either login or provide new password'))
+}
+         user.password = req.body.password;
+         user.confirmPassword = req.body.confirmPassword;
+         user.passwordResetToken=undefined;
+         user.passwordTokenExpire=undefined;
+         await user.save();
+
+         const token = generateToken(user);
+         res.status(200).json({
+            success:'true',
+            token
+         })
+
+
+})
+
+exports.updatePassword = catchAsync(async(req,res,next)=>{
+    const user = await User.findById(req.user.id).select('+password');
+    if(!user){
+        return next(new GlobalError('This is protected route, so must log in.'),403)
+    }
+   if(!req.body.currentPassword){
+    return next(new GlobalError('Please provide your current password'), 400)
+   }
+   const comparePassword = await user.checkPwdEncryption(req.body.currentPassword, user.password)
+
+   if(!comparePassword){
+    return next(new GlobalError('Password wrong, please provide correct password'),400)
+   }
+
+   if(!req.body.password || !req.body.confirmPassword){
+    return next (new GlobalError('Password and password confirm field is required'),400)
+   }
+
+   user.password=req.body.password;
+   user.confirmPassword =req.body.confirmPassword
+   await user.save()
+   const token = generateToken(user)
+   res.status(200).json({
+    success:'true',
+    token
+   })
+})
+
+exports.updateMe = catchAsync(async (req,res,next)=>{
+
+    
+
+    if(req.body.password|| req.body.confirmPassword){
+        return next(new GlobalError('To update your password follow "/updatePassword" '))
+    }
+
+    const filteredBody = filterObj(req.body, 'email'  ) 
+    const user = await User.findByIdAndUpdate(req.user.id, filteredBody, {
+        new:true,
+        runValidators:true
+    });
+    if(!user){
+        return next (new GlobalError('No user found for email'),404)
+    }
 
 })
