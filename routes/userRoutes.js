@@ -28,7 +28,7 @@ router .route("/")
 router .route("/:id")
     .get(protectRoute, getSingleUser)
     .patch(protectRoute, updateUserSelf)
-    .delete(protectRoute, authorizationRoutes("admin", "superadmin"), deleteUser);
+    .delete(protectRoute, deleteUser);
 
 router.route("/login").post(logInUser);
 
