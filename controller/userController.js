@@ -43,7 +43,7 @@ exports.updateUserSelf = catchAsync(async (req, res, next) => {
 
     if (!userDetail)
         return next(
-            new GlobalError(`User doesn't exist for ${findUser.id} ID`, 404)
+            new GlobalError(`User doesn't exist for ${userDetail.id} ID`, 404)
         );
 
     userDetail = await User.findByIdAndUpdate(userDetail.id, req.body, {
@@ -63,7 +63,7 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
     let removeUser = await User.findById(req.params.id);
     if (!removeUser)
         return next(
-            new GlobalError(`User doesn't exist for ${findUser.id} ID`, 404)
+            new GlobalError(`User doesn't exist for ${removeUser.id} ID`, 404)
         );
 
     removeUser = await User.findByIdAndRemove(removeUser.id);
