@@ -63,14 +63,8 @@ exports.signUpUser = catchAsync(async (req, res) => {
         role: req.body.role,
     });
 
-    const token = generateToken(newUser)
-    res.status(201).json({
-        success: "true",
-        token,
-        data: {
-            user: newUser,
-        },
-    });
+    generateToken(newUser,201,res)
+
 });
 
 //!Login function
@@ -95,13 +89,8 @@ exports.logInUser = catchAsync(async (req, res, next) => {
             )
         );
     }
-    const token = generateToken(user)
-    if (user) {
-        res.status(200).json({
-            success: true,
-            token,
-        });
-    }
+ generateToken(user,200,res)
+ 
 });
 
 exports.protectRoute = catchAsync(async (req, res, next) => {
@@ -212,11 +201,8 @@ if (newPassHash){
          user.passwordTokenExpire=undefined;
          await user.save();
 
-         const token = generateToken(user);
-         res.status(200).json({
-            success:'true',
-            token
-         })
+     generateToken(user,200,res);
+        
 
 
 })
@@ -242,16 +228,11 @@ exports.updatePassword = catchAsync(async(req,res,next)=>{
    user.password=req.body.password;
    user.confirmPassword =req.body.confirmPassword
    await user.save()
-   const token = generateToken(user)
-   res.status(200).json({
-    success:'true',
-    token
-   })
+  generateToken(user,200,res)
+   
 })
 
 exports.updateMe = catchAsync(async (req,res,next)=>{
-
-    
 
     if(req.body.password|| req.body.confirmPassword){
         return next(new GlobalError('To update your password follow "/updatePassword" '))
